@@ -1,12 +1,14 @@
-import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786635068';
-import { soundService } from '../services/soundEngine.js?v=1786635068';
-import { letterStorage } from '../services/letterStorage.js?v=1786635068';
+import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786635549';
+import { soundService } from '../services/soundEngine.js?v=1786635549';
+import { letterStorage } from '../services/letterStorage.js?v=1786635549';
 
 const { useState, useEffect, useRef } = window.React;
 const html = window.htm.bind(window.React.createElement);
 
 export const MemoryStoryPage = ({ onNavigate, onSelectMemory, isContributorMode = false }) => {
   const [displayMemories, setDisplayMemories] = useState([]);
+  const [memoryPendingDelete, setMemoryPendingDelete] = useState(null);
+  const [toastMessage, setToastMessage] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [mediaList, setMediaList] = useState([]);
   const [isProcessingMedia, setIsProcessingMedia] = useState(false);
@@ -232,13 +234,12 @@ export const MemoryStoryPage = ({ onNavigate, onSelectMemory, isContributorMode 
                     <video
                       src=${mem.videoUrl || mem.image}
                       preload="metadata"
-                      muted
                       playsinline
+                      controls
                       className="polaroid-embedded-video"
+                      style=${{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onClick=${(e) => e.stopPropagation()}
                     ></video>
-                    <div className="polaroid-play-overlay">
-                      <span className="polaroid-play-btn-circle">▶</span>
-                    </div>
                   </div>
                 ` : html`
                   <img src=${mem.image} alt=${mem.title || `Memory ${idx + 1}`} loading="lazy" />
