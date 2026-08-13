@@ -1,0 +1,29 @@
+{
+  "name": "immersive-birthday-app",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "An interactive, multi-page immersive React birthday celebration boilerplate with rich animations, 3D elements, sound effects, and games.",
+  "scripts": {
+    "dev": "python3 -m http.server 8080",
+    "serve": "python3 -m http.server 8080",
+    "start": "python3 -m http.server 8080"
+  },
+  "keywords": [
+    "react",
+    "birthday",
+    "interactive",
+    "animations",
+    "web-audio",
+    "canvas-confetti",
+    "polaroid-gallery"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "canvas-confetti": "^1.9.4",
+    "lucide-react": "^1.16.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}
