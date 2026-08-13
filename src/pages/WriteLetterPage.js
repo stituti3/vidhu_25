@@ -1,47 +1,37 @@
-import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786634340';
-import { soundService } from '../services/soundEngine.js?v=1786634340';
-import { letterStorage } from '../services/letterStorage.js?v=1786634340';
-import { launchConfetti } from '../components/ConfettiLauncher.js?v=1786634340';
+import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786635068';
+import { soundService } from '../services/soundEngine.js?v=1786635068';
+import { letterStorage } from '../services/letterStorage.js?v=1786635068';
+import { launchConfetti } from '../components/ConfettiLauncher.js?v=1786635068';
 
 const { useState, useEffect, useRef } = window.React;
 const html = window.htm.bind(window.React.createElement);
 
 export const WriteLetterPage = ({ onNavigate, initialMode, isContributorMode = false }) => {
   const { celebrant } = BIRTHDAY_CONFIG;
-  const existingLetter = letterStorage.getMyLetter();
 
-  // If a letter already exists and no specific initialMode was forced, start in 'view' mode, otherwise 'compose'
-  const [viewState, setViewState] = useState(
-    initialMode || (existingLetter ? 'view' : 'compose')
-  );
+  // Always start in compose mode unless viewing a specifically saved letter
+  const [viewState, setViewState] = useState(initialMode || 'compose');
 
-  // Form State - Freeform handwritten letter with multiple photos & videos
-  const [message, setMessage] = useState(existingLetter?.message || '');
-  const [senderName, setSenderName] = useState(existingLetter?.sender || '');
-  
-  // Media List state (array of { id, type: 'image'|'video', url, caption, name })
-  const [mediaList, setMediaList] = useState(() => {
-    if (existingLetter?.media && Array.isArray(existingLetter.media)) {
-      return existingLetter.media;
-    }
-    if (existingLetter?.image) {
-      return [{
-        id: `media-init-0`,
-        type: 'image',
-        url: existingLetter.image,
-        caption: existingLetter.caption || '',
-        name: 'Photo Memory'
-      }];
-    }
-    return [];
-  });
+  // Form State - Always start blank for a new letter
+  const [message, setMessage] = useState('');
+  const [senderName, setSenderName] = useState('');
+  const [mediaList, setMediaList] = useState([]);
 
-  const [savedLetter, setSavedLetter] = useState(existingLetter);
+  const [savedLetter, setSavedLetter] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
   const [isProcessingMedia, setIsProcessingMedia] = useState(false);
   const [processingStatus, setProcessingStatus] = useState('');
 
   const fileInputRef = useRef(null);
+
+  const resetForm = () => {
+    setMessage('');
+    setSenderName('');
+    setMediaList([]);
+    setSavedLetter(null);
+    setViewState('compose');
+    soundService.playClick();
+  };
 
   // Compress and process an individual image file
   const processImageFile = (file) => {
@@ -180,12 +170,8 @@ export const WriteLetterPage = ({ onNavigate, initialMode, isContributorMode = f
     });
 
     setSavedLetter(saved);
+    setViewState('view');
     launchConfetti('fireworks');
-
-    // Return to Letters desk in full mode, or Memories/Envelope in contributor mode
-    setTimeout(() => {
-      onNavigate(isContributorMode ? 'memories' : 'letters');
-    }, 450);
   };
 
   const imageCount = mediaList.filter((m) => m.type === 'image').length;
@@ -210,7 +196,7 @@ export const WriteLetterPage = ({ onNavigate, initialMode, isContributorMode = f
           <!-- Warm Header -->
           <div className="card-vintage-header warm-polaroid-header">
             <h1 className="hero-title font-rebecca-title warm-heading">
-              ${savedLetter ? `Edit Your Letter to ${celebrant.nickname || celebrant.name} ♡` : `Write Your Letter to ${celebrant.nickname || celebrant.name} ♡`}
+              Write a Letter to ${celebrant.nickname || celebrant.name} ♡
             </h1>
             <p className="composer-sub-guide">
               Write your heartfelt note and attach memorable photos & videos for his 25th birthday.
@@ -470,19 +456,16 @@ export const WriteLetterPage = ({ onNavigate, initialMode, isContributorMode = f
           <!-- Bottom Action Navigation -->
           <div className="stationery-bottom-nav">
             <button
-              onClick=${() => {
-                soundService.playClick();
-                onNavigate(isContributorMode ? 'memories' : 'letters');
-              }}
+              onClick=${resetForm}
               className="btn btn-secondary"
             >
-              <span>${isContributorMode ? '← Back to Memories' : '← Back to Letters Desk'}</span>
+              <span>✍️ Write Another Letter</span>
             </button>
 
             <button
               onClick=${() => {
                 soundService.playClick();
-                setViewState('compose');
+                onNavigate(isContributorMode ? 'memories' : 'letters');
               }}
               className="btn btn-gold"
             >

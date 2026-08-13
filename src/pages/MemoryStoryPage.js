@@ -1,19 +1,16 @@
-import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786634340';
-import { soundService } from '../services/soundEngine.js?v=1786634340';
-import { letterStorage } from '../services/letterStorage.js?v=1786634340';
+import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786635068';
+import { soundService } from '../services/soundEngine.js?v=1786635068';
+import { letterStorage } from '../services/letterStorage.js?v=1786635068';
 
 const { useState, useEffect, useRef } = window.React;
 const html = window.htm.bind(window.React.createElement);
 
 export const MemoryStoryPage = ({ onNavigate, onSelectMemory, isContributorMode = false }) => {
   const [displayMemories, setDisplayMemories] = useState([]);
-  const [memoryPendingDelete, setMemoryPendingDelete] = useState(null);
-  const [toastMessage, setToastMessage] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newMediaUrl, setNewMediaUrl] = useState(null);
-  const [newMediaType, setNewMediaType] = useState('image');
-  const [newMediaCaption, setNewMediaCaption] = useState('');
+  const [mediaList, setMediaList] = useState([]);
   const [isProcessingMedia, setIsProcessingMedia] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState('');
   
   const fileInputRef = useRef(null);
 
@@ -114,39 +111,57 @@ export const MemoryStoryPage = ({ onNavigate, onSelectMemory, isContributorMode 
   };
 
   const handleMediaFileChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     setIsProcessingMedia(true);
-    let url = null;
-    let type = 'image';
+    setProcessingStatus(`Processing ${files.length} files...`);
+    const newItems = [];
 
-    if (file.type.startsWith('image/')) {
-      url = await processImageFile(file);
-    } else if (file.type.startsWith('video/')) {
-      url = await processVideoFile(file);
-      type = 'video';
-    } else {
-      alert('Unrecognized file type.');
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.type.startsWith('image/')) {
+        const url = await processImageFile(file);
+        if (url) {
+          newItems.push({ id: `media-${Date.now()}-${i}`, type: 'image', url, caption: '' });
+        }
+      } else if (file.type.startsWith('video/')) {
+        const url = await processVideoFile(file);
+        if (url) {
+          newItems.push({ id: `media-${Date.now()}-${i}`, type: 'video', url, caption: '' });
+        }
+      }
     }
 
-    if (url) {
-      setNewMediaUrl(url);
-      setNewMediaType(type);
+    if (newItems.length > 0) {
+      setMediaList((prev) => [...prev, ...newItems]);
       soundService.playSparkle();
     }
     setIsProcessingMedia(false);
+    setProcessingStatus('');
+  };
+
+  const handleUpdateMediaCaption = (idToUpdate, newCaption) => {
+    setMediaList((prev) => prev.map((item) => (item.id === idToUpdate ? { ...item, caption: newCaption } : item)));
+  };
+
+  const handleRemoveMediaItem = (idToRemove) => {
+    setMediaList((prev) => prev.filter((item) => item.id !== idToRemove));
   };
 
   const handleSavePolaroid = () => {
-    if (!newMediaUrl) return;
+    if (mediaList.length === 0) return;
     soundService.playClick();
-    letterStorage.addCustomMemory({
-      type: newMediaType,
-      url: newMediaUrl,
-      caption: newMediaCaption
+    
+    mediaList.forEach(item => {
+      letterStorage.addCustomMemory({
+        type: item.type,
+        url: item.url,
+        caption: item.caption
+      });
     });
-    setToastMessage('Added to the Polaroid Wall ✓');
+
+    setToastMessage(`Added ${mediaList.length} items to the Polaroid Wall ✓`);
     setTimeout(() => setToastMessage(''), 3500);
     closeAddModal();
     refreshMemories();
@@ -154,9 +169,7 @@ export const MemoryStoryPage = ({ onNavigate, onSelectMemory, isContributorMode 
 
   const closeAddModal = () => {
     setIsAddModalOpen(false);
-    setNewMediaUrl(null);
-    setNewMediaCaption('');
-    setNewMediaType('image');
+    setMediaList([]);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -359,12 +372,13 @@ export const MemoryStoryPage = ({ onNavigate, onSelectMemory, isContributorMode 
           <div className="delete-confirm-modal" onClick=${(e) => e.stopPropagation()} style=${{ maxWidth: '400px' }}>
             <h3 className="delete-modal-title font-rebecca">Add to Polaroid Wall</h3>
             
-            ${!newMediaUrl ? html`
+            ${mediaList.length === 0 ? html`
               <div style=${{ margin: '20px 0' }}>
-                <p className="delete-modal-desc" style=${{ marginBottom: '15px' }}>Choose a picture or short video to hang on the wall.</p>
+                <p className="delete-modal-desc" style=${{ marginBottom: '15px' }}>Choose pictures or short videos to hang on the wall. You can select multiple at once!</p>
                 <input 
                   type="file" 
                   accept="image/*,video/*" 
+                  multiple
                   ref=${fileInputRef} 
                   onChange=${handleMediaFileChange} 
                   style=${{ display: 'none' }}
@@ -375,26 +389,57 @@ export const MemoryStoryPage = ({ onNavigate, onSelectMemory, isContributorMode 
                   disabled=${isProcessingMedia}
                   style=${{ width: '100%' }}
                 >
-                  ${isProcessingMedia ? 'Processing...' : 'Select File'}
+                  ${isProcessingMedia ? processingStatus : 'Select Files'}
                 </button>
               </div>
             ` : html`
-              <div style=${{ margin: '15px 0' }}>
-                <div className="polaroid-photo-container" style=${{ width: '150px', height: '150px', margin: '0 auto 15px', borderRadius: '4px', overflow: 'hidden' }}>
-                  ${newMediaType === 'video' ? html`
-                    <video src=${newMediaUrl} className="polaroid-embedded-video" muted playsinline autoPlay loop></video>
-                  ` : html`
-                    <img src=${newMediaUrl} style=${{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  `}
+              <div style=${{ margin: '15px 0', maxHeight: '60vh', overflowY: 'auto' }}>
+                <p className="delete-modal-desc" style=${{ marginBottom: '15px' }}>You are adding ${mediaList.length} items.</p>
+                <div style=${{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  ${mediaList.map((item) => html`
+                    <div key=${item.id} style=${{ display: 'flex', gap: '10px', alignItems: 'center', background: '#f8f4eb', padding: '10px', borderRadius: '8px' }}>
+                      <div className="polaroid-photo-container" style=${{ width: '60px', height: '60px', flexShrink: 0, borderRadius: '4px', overflow: 'hidden' }}>
+                        ${item.type === 'video' ? html`
+                          <video src=${item.url} style=${{ width: '100%', height: '100%', objectFit: 'cover' }} muted playsinline></video>
+                        ` : html`
+                          <img src=${item.url} style=${{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        `}
+                      </div>
+                      <div style=${{ flexGrow: 1 }}>
+                        <input
+                          type="text"
+                          placeholder="Optional caption..."
+                          className="share-url-input font-handwriting"
+                          style=${{ width: '100%', boxSizing: 'border-box', fontSize: '1.2rem', padding: '6px 10px', margin: 0 }}
+                          value=${item.caption}
+                          onChange=${(e) => handleUpdateMediaCaption(item.id, e.target.value)}
+                        />
+                      </div>
+                      <button type="button" onClick=${() => handleRemoveMediaItem(item.id)} style=${{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>
+                        ❌
+                      </button>
+                    </div>
+                  `)}
                 </div>
-                <input
-                  type="text"
-                  placeholder="Add a cute caption..."
-                  className="share-url-input font-handwriting"
-                  style=${{ width: '100%', boxSizing: 'border-box', fontSize: '1.2rem', padding: '10px' }}
-                  value=${newMediaCaption}
-                  onChange=${(e) => setNewMediaCaption(e.target.value)}
-                />
+                
+                <div style=${{ marginTop: '15px' }}>
+                  <input 
+                    type="file" 
+                    accept="image/*,video/*" 
+                    multiple
+                    ref=${fileInputRef} 
+                    onChange=${handleMediaFileChange} 
+                    style=${{ display: 'none' }}
+                  />
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick=${() => fileInputRef.current.click()}
+                    disabled=${isProcessingMedia}
+                    style=${{ width: '100%', fontSize: '0.9rem', padding: '8px' }}
+                  >
+                    ${isProcessingMedia ? processingStatus : '+ Add More Files'}
+                  </button>
+                </div>
               </div>
             `}
 
@@ -402,9 +447,9 @@ export const MemoryStoryPage = ({ onNavigate, onSelectMemory, isContributorMode 
               <button type="button" onClick=${closeAddModal} className="btn btn-secondary">
                 <span>Cancel</span>
               </button>
-              ${newMediaUrl && html`
+              ${mediaList.length > 0 && html`
                 <button type="button" onClick=${handleSavePolaroid} className="btn btn-gold">
-                  <span>Post to Wall</span>
+                  <span>Post All to Wall</span>
                 </button>
               `}
             </div>

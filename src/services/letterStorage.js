@@ -29,18 +29,21 @@ class LetterStorageService {
     });
   }
 
-  getMyLetter() {
+  getMyLetters() {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.MY_LETTER);
-      return data ? JSON.parse(data) : null;
+      if (!data) return [];
+      const parsed = JSON.parse(data);
+      // Backwards compatibility: if it's a single object (not array), wrap it in array
+      return Array.isArray(parsed) ? parsed : [parsed];
     } catch (e) {
-      console.warn('Error reading my letter from localStorage:', e);
-      return null;
+      console.warn('Error reading my letters from localStorage:', e);
+      return [];
     }
   }
 
   hasSubmittedLetter() {
-    return this.getMyLetter() !== null;
+    return this.getMyLetters().length > 0;
   }
 
   async fetchCommunityLetters() {
@@ -77,8 +80,7 @@ class LetterStorageService {
 
   saveMyLetter(letterPayload) {
     try {
-      const existing = this.getMyLetter();
-      const id = existing?.id || `let-user-${Date.now()}`;
+      const id = letterPayload.id || `let-user-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
       
       // Process media list (supports multiple images and videos)
       let media = [];
@@ -114,8 +116,15 @@ class LetterStorageService {
         isCustom: true
       };
 
-      // 1. Save as contributor's personal letter on this device
-      localStorage.setItem(STORAGE_KEYS.MY_LETTER, JSON.stringify(letterData));
+      // 1. Save as contributor's personal letters on this device
+      const myLetters = this.getMyLetters();
+      const existingMyLetterIdx = myLetters.findIndex(l => l.id === id);
+      if (existingMyLetterIdx >= 0) {
+        myLetters[existingMyLetterIdx] = letterData;
+      } else {
+        myLetters.push(letterData);
+      }
+      localStorage.setItem(STORAGE_KEYS.MY_LETTER, JSON.stringify(myLetters));
 
       // 2. Sync to local community letters
       const community = this.getCommunityLetters();
@@ -221,47 +230,49 @@ class LetterStorageService {
   }
 
   getMyUploadedMemories() {
-    const myLetter = this.getMyLetter();
-    if (!myLetter) return [];
+    const myLetters = this.getMyLetters();
+    if (myLetters.length === 0) return [];
 
     const deletedMemIds = this.getDeletedMemoryIds();
     const memories = [];
 
-    if (Array.isArray(myLetter.media) && myLetter.media.length > 0) {
-      myLetter.media.forEach((m, idx) => {
-        const memId = `my-media-${myLetter.id}-${m.id || idx}`;
-        if (!deletedMemIds.includes(memId) && !deletedMemIds.includes(`uploaded-${myLetter.id}-${m.id || idx}`)) {
+    myLetters.forEach(myLetter => {
+      if (Array.isArray(myLetter.media) && myLetter.media.length > 0) {
+        myLetter.media.forEach((m, idx) => {
+          const memId = `my-media-${myLetter.id}-${m.id || idx}`;
+          if (!deletedMemIds.includes(memId) && !deletedMemIds.includes(`uploaded-${myLetter.id}-${m.id || idx}`)) {
+            memories.push({
+              id: memId,
+              letterId: myLetter.id,
+              mediaId: m.id || `m-${idx}`,
+              type: m.type || 'image',
+              image: m.url,
+              videoUrl: m.type === 'video' ? m.url : null,
+              caption: m.caption || 'your memory ♡',
+              date: myLetter.relation || (myLetter.sender ? `by ${myLetter.sender}` : 'my memory ♡'),
+              title: myLetter.sender || (m.type === 'video' ? 'Your Video' : 'Your Photo'),
+              rotation: idx % 2 === 0 ? -1.8 : 1.8,
+              isCustom: true
+            });
+          }
+        });
+      } else if (myLetter.image) {
+        const myPhotoId = `my-photo-${myLetter.id}`;
+        if (!deletedMemIds.includes(myPhotoId)) {
           memories.push({
-            id: memId,
+            id: myPhotoId,
             letterId: myLetter.id,
-            mediaId: m.id || `m-${idx}`,
-            type: m.type || 'image',
-            image: m.url,
-            videoUrl: m.type === 'video' ? m.url : null,
-            caption: m.caption || 'your memory ♡',
+            type: 'image',
+            image: myLetter.image,
+            caption: myLetter.caption || 'your photo memory ♡',
             date: myLetter.relation || (myLetter.sender ? `by ${myLetter.sender}` : 'my memory ♡'),
-            title: myLetter.sender || (m.type === 'video' ? 'Your Video' : 'Your Photo'),
-            rotation: idx % 2 === 0 ? -1.8 : 1.8,
+            title: myLetter.sender || 'Your Photo',
+            rotation: -1.8,
             isCustom: true
           });
         }
-      });
-    } else if (myLetter.image) {
-      const myPhotoId = `my-photo-${myLetter.id}`;
-      if (!deletedMemIds.includes(myPhotoId)) {
-        memories.push({
-          id: myPhotoId,
-          letterId: myLetter.id,
-          type: 'image',
-          image: myLetter.image,
-          caption: myLetter.caption || 'your photo memory ♡',
-          date: myLetter.relation || (myLetter.sender ? `by ${myLetter.sender}` : 'my memory ♡'),
-          title: myLetter.sender || 'Your Photo',
-          rotation: -1.8,
-          isCustom: true
-        });
       }
-    }
+    });
 
     return memories;
   }
