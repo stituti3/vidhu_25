@@ -1,7 +1,7 @@
-import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786636111';
-import { soundService } from '../services/soundEngine.js?v=1786636111';
-import { letterStorage } from '../services/letterStorage.js?v=1786636111';
-import { ShareModal } from '../components/ShareModal.js?v=1786636111';
+import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786636318';
+import { soundService } from '../services/soundEngine.js?v=1786636318';
+import { letterStorage } from '../services/letterStorage.js?v=1786636318';
+import { ShareModal } from '../components/ShareModal.js?v=1786636318';
 
 const { useState, useEffect } = window.React;
 const html = window.htm.bind(window.React.createElement);
@@ -163,7 +163,7 @@ export const LettersPage = ({ onNavigate }) => {
           <!-- Right: Unfolded Stationery Paper Sheet -->
           ${selectedLetter && html`
             <div className="letter-unfolded-view">
-              <div className="letter-parchment-sheet love-letter-style">
+              <div className="letter-parchment-sheet love-letter-style" style=${{ position: 'relative' }}>
                 
                 <!-- New Header Layout -->
                 <div className="love-letter-header" style=${{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0' }}>
@@ -218,28 +218,36 @@ export const LettersPage = ({ onNavigate }) => {
                   </div>
                 </div>
 
-                <!-- Letter Actions -->
+                <!-- Edit Letter Icon -->
                 ${selectedLetter.isCustom && html`
-                  <div style=${{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '30px' }}>
-                    <button
-                      onClick=${() => {
-                        soundService.playSparkle();
-                        onNavigate('write_letter', selectedLetter.id);
-                      }}
-                      className="btn btn-secondary"
-                    >
-                      <span>Edit Letter ✍️</span>
-                    </button>
-                    <button
-                      onClick=${() => {
-                        soundService.playSparkle();
-                        onNavigate('write_letter');
-                      }}
-                      className="btn btn-gold"
-                    >
-                      <span>Add Another Letter ➕</span>
-                    </button>
-                  </div>
+                  <button
+                    onClick=${() => {
+                      soundService.playSparkle();
+                      onNavigate('write_letter', selectedLetter.id);
+                    }}
+                    title="Edit Letter"
+                    style=${{
+                      position: 'absolute',
+                      bottom: '25px',
+                      right: '25px',
+                      background: 'rgba(255, 255, 255, 0.5)',
+                      border: '1px solid rgba(0,0,0,0.1)',
+                      borderRadius: '50%',
+                      width: '40px',
+                      height: '40px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.2rem',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter=${(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                    onMouseLeave=${(e) => e.currentTarget.style.transform = 'scale(1)'}
+                  >
+                    🖊️
+                  </button>
                 `}
               </div>
             </div>
