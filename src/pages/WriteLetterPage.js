@@ -1,7 +1,7 @@
-import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786612520';
-import { soundService } from '../services/soundEngine.js?v=1786612520';
-import { letterStorage } from '../services/letterStorage.js?v=1786612520';
-import { launchConfetti } from '../components/ConfettiLauncher.js?v=1786612520';
+import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786634340';
+import { soundService } from '../services/soundEngine.js?v=1786634340';
+import { letterStorage } from '../services/letterStorage.js?v=1786634340';
+import { launchConfetti } from '../components/ConfettiLauncher.js?v=1786634340';
 
 const { useState, useEffect, useRef } = window.React;
 const html = window.htm.bind(window.React.createElement);
@@ -17,6 +17,7 @@ export const WriteLetterPage = ({ onNavigate, initialMode, isContributorMode = f
 
   // Form State - Freeform handwritten letter with multiple photos & videos
   const [message, setMessage] = useState(existingLetter?.message || '');
+  const [senderName, setSenderName] = useState(existingLetter?.sender || '');
   
   // Media List state (array of { id, type: 'image'|'video', url, caption, name })
   const [mediaList, setMediaList] = useState(() => {
@@ -169,7 +170,7 @@ export const WriteLetterPage = ({ onNavigate, initialMode, isContributorMode = f
     soundService.playSparkle();
 
     const saved = letterStorage.saveMyLetter({
-      sender: '',
+      sender: senderName.trim(),
       relation: '',
       title: `Letter for ${celebrant.nickname || celebrant.name}`,
       message: message.trim(),
@@ -220,6 +221,14 @@ export const WriteLetterPage = ({ onNavigate, initialMode, isContributorMode = f
             
             <!-- Spacious Handwritten Letter Textarea with Authentic Torn Paper Look -->
             <div className="composer-field-group">
+              <input
+                type="text"
+                className="handwritten-letter-textarea font-handwriting"
+                placeholder="Your Name (e.g., A Friend)"
+                style=${{ minHeight: '40px', padding: '10px 15px', marginBottom: '15px' }}
+                value=${senderName}
+                onChange=${(e) => setSenderName(e.target.value)}
+              />
               <textarea
                 className="handwritten-letter-textarea"
                 placeholder="Dear Vidhanth,&#10;&#10;Happy 25th Birthday! Write whatever comes to your heart...&#10;&#10;— With love / Cheers / Best wishes,&#10;[Your Name]"
