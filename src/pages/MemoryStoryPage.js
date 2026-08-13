@@ -1,6 +1,6 @@
-import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786643918';
-import { soundService } from '../services/soundEngine.js?v=1786643918';
-import { letterStorage } from '../services/letterStorage.js?v=1786643918';
+import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786652605';
+import { soundService } from '../services/soundEngine.js?v=1786652605';
+import { letterStorage } from '../services/letterStorage.js?v=1786652605';
 
 const { useState, useEffect, useRef } = window.React;
 const html = window.htm.bind(window.React.createElement);
@@ -314,7 +314,7 @@ export const MemoryStoryPage = ({ onNavigate, onSelectMemory, isContributorMode 
                     type="text"
                     className="polaroid-caption font-handwriting"
                     style=${{ background: 'transparent', border: 'none', width: '100%', textAlign: 'center', margin: 0, padding: 0 }}
-                    placeholder="Add a caption..."
+                    placeholder=""
                     value=${mem.caption || ''}
                     onChange=${(e) => handleInlineCaptionChange(mem, e.target.value)}
                   />
@@ -324,11 +324,6 @@ export const MemoryStoryPage = ({ onNavigate, onSelectMemory, isContributorMode 
                       ${mem.caption}
                     </div>
                   `}
-                `}
-                ${mem.date && html`
-                  <div className="polaroid-date-stamp font-handwriting-sub">
-                    ${mem.date}
-                  </div>
                 `}
               </div>
             </div>

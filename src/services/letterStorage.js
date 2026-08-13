@@ -1,7 +1,7 @@
 // Letter & Photo Storage Service
 // Handles persistence for Contributor Letters & Photos in localStorage + Backend API Sync
-import { BAKED_LETTERS } from '../data/baked_letters.js?v=1786643918';
-import { BAKED_MEMORIES } from '../data/baked_memories.js?v=1786643918';
+import { BAKED_LETTERS } from '../data/baked_letters.js?v=1786652605';
+import { BAKED_MEMORIES } from '../data/baked_memories.js?v=1786652605';
 
 const STORAGE_KEYS = {
   MY_LETTER: 'dear_dewey_my_letter_v1',

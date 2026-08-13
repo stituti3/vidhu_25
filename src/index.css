@@ -3186,7 +3186,7 @@ h1, h2, h3, h4, h5, h6 {
   background: #ffffff;
   padding: 10px 10px 18px 10px;
   border-radius: 3px;
-  max-width: min(380px, 86vw);
+  max-width: min(480px, 90vw);
   width: 100%;
   box-shadow: 
     0 30px 80px rgba(0, 0, 0, 0.95),
@@ -3207,7 +3207,7 @@ h1, h2, h3, h4, h5, h6 {
 .polaroid-lightbox-photo {
   width: 100%;
   aspect-ratio: 1/1;
-  max-height: 52vh;
+  max-height: 65vh;
   background: #1e090b;
   border-radius: 1px;
   overflow: hidden;
