@@ -1,7 +1,7 @@
-import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786636318';
-import { soundService } from '../services/soundEngine.js?v=1786636318';
-import { letterStorage } from '../services/letterStorage.js?v=1786636318';
-import { launchConfetti } from '../components/ConfettiLauncher.js?v=1786636318';
+import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786637042';
+import { soundService } from '../services/soundEngine.js?v=1786637042';
+import { letterStorage } from '../services/letterStorage.js?v=1786637042';
+import { launchConfetti } from '../components/ConfettiLauncher.js?v=1786637042';
 
 const { useState, useEffect, useRef } = window.React;
 const html = window.htm.bind(window.React.createElement);
@@ -37,7 +37,8 @@ export const WriteLetterPage = ({ onNavigate, initialLetterId, isContributorMode
     soundService.playClick();
   };
 
-  const handleSaveLetter = () => {
+  const handleSaveLetter = (e) => {
+    e.preventDefault();
     if (!message.trim() || !senderName.trim()) {
       alert("Please add both your name and a message.");
       return;
@@ -82,7 +83,7 @@ export const WriteLetterPage = ({ onNavigate, initialLetterId, isContributorMode
             </h1>
           </div>
 
-          <div className="composer-form-parchment torn-paper-composer-card">
+          <form onSubmit=${handleSaveLetter} className="composer-form-parchment torn-paper-composer-card">
             
             <div className="composer-field-group">
               <input
@@ -101,11 +102,6 @@ export const WriteLetterPage = ({ onNavigate, initialLetterId, isContributorMode
                 onInput=${(e) => setMessage(e.target.value)}
                 required
               ></textarea>
-            </div>
-
-                </div>
-              </div>
-
             </div>
 
             <!-- Actions Row -->
@@ -163,34 +159,6 @@ export const WriteLetterPage = ({ onNavigate, initialLetterId, isContributorMode
               <div className="torn-letter-body-text">
                 ${savedLetter.message}
               </div>
-
-              <!-- Attached Media Strip (If contributor attached photos/videos) -->
-              ${mediaList.length > 0 && html`
-                <div className="letter-attached-gallery">
-                  <div className="attached-gallery-title font-rebecca">
-                    📎 Attached Memories (${mediaList.length})
-                  </div>
-                  <div className="attached-gallery-row">
-                    ${mediaList.map((item, idx) => html`
-                      <div key=${item.id || idx} className="attached-gallery-item">
-                        ${item.type === 'video' ? html`
-                          <div className="attached-video-thumb">
-                            <video src=${item.url} muted preload="metadata"></video>
-                            <span className="thumb-video-icon">▶</span>
-                          </div>
-                        ` : html`
-                          <img src=${item.url} alt="Attached Memory" className="attached-img-thumb" />
-                        `}
-                        ${item.caption && html`
-                          <div className="attached-thumb-caption font-handwriting">
-                            ${item.caption}
-                          </div>
-                        `}
-                      </div>
-                    `)}
-                  </div>
-                </div>
-              `}
 
               <!-- Authentic Bottom Wax Seal Stamp Pressed on Paper -->
               <div className="torn-letter-seal-stamp wax-seal" title="Sealed with love">
