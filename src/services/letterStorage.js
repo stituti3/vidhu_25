@@ -1,7 +1,7 @@
 // Letter & Photo Storage Service
 // Handles persistence for Contributor Letters & Photos in localStorage + Backend API Sync
-import { BAKED_LETTERS } from '../data/baked_letters.js?v=1786656180';
-import { BAKED_MEMORIES } from '../data/baked_memories.js?v=1786656180';
+import { BAKED_LETTERS } from '../data/baked_letters.js?v=1786657273';
+import { BAKED_MEMORIES } from '../data/baked_memories.js?v=1786657273';
 
 const STORAGE_KEYS = {
   MY_LETTER: 'dear_dewey_my_letter_v1',
@@ -18,6 +18,16 @@ class LetterStorageService {
     this.listeners = new Set();
     this.serverMemories = [];
     this.serverLetters = [];
+    
+    // Quick reset mechanism for wiping the Polaroid Wall
+    if (window.location.search.includes('reset_wall=true')) {
+      localStorage.removeItem(STORAGE_KEYS.CUSTOM_MEMORIES);
+      localStorage.removeItem(STORAGE_KEYS.MEMORY_ORDER);
+      localStorage.removeItem(STORAGE_KEYS.DELETED_MEMORY_IDS);
+      // Remove query param from URL so it doesn't loop
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
     this.fetchBackendData();
   }
 

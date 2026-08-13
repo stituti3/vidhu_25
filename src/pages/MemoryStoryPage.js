@@ -1,6 +1,6 @@
-import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786656180';
-import { soundService } from '../services/soundEngine.js?v=1786656180';
-import { letterStorage } from '../services/letterStorage.js?v=1786656180';
+import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786657273';
+import { soundService } from '../services/soundEngine.js?v=1786657273';
+import { letterStorage } from '../services/letterStorage.js?v=1786657273';
 
 const { useState, useEffect, useRef } = window.React;
 const html = window.htm.bind(window.React.createElement);
@@ -132,7 +132,7 @@ export const MemoryStoryPage = ({ onNavigate, onSelectMemory, isContributorMode 
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-          const maxDim = 1000;
+          const maxDim = 600;
           if (width > height && width > maxDim) {
             height = Math.round((height * maxDim) / width);
             width = maxDim;
