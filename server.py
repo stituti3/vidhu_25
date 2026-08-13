@@ -191,6 +191,9 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         # Fallback to serving static files
+        if not '.' in parsed.path and parsed.path != '/':
+            # SPA Routing: Serve index.html for extension-less paths (like /photos)
+            self.path = '/'
         super().do_GET()
 
     def do_POST(self):
