@@ -1,6 +1,6 @@
-import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786639408';
-import { soundService } from '../services/soundEngine.js?v=1786639408';
-import { letterStorage } from '../services/letterStorage.js?v=1786639408';
+import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786643918';
+import { soundService } from '../services/soundEngine.js?v=1786643918';
+import { letterStorage } from '../services/letterStorage.js?v=1786643918';
 
 const { useState, useEffect, useRef } = window.React;
 const html = window.htm.bind(window.React.createElement);
@@ -13,6 +13,10 @@ export const MemoryStoryPage = ({ onNavigate, onSelectMemory, isContributorMode 
   const [mediaList, setMediaList] = useState([]);
   const [isProcessingMedia, setIsProcessingMedia] = useState(false);
   const [processingStatus, setProcessingStatus] = useState('');
+  
+  // Drag and Drop State
+  const [draggedMemId, setDraggedMemId] = useState(null);
+  const [dragOverMemId, setDragOverMemId] = useState(null);
   
   const fileInputRef = useRef(null);
 
@@ -39,7 +43,7 @@ export const MemoryStoryPage = ({ onNavigate, onSelectMemory, isContributorMode 
   const handleCardClick = (mem) => {
     soundService.playSparkle();
     if (onSelectMemory) {
-      onSelectMemory(mem);
+      onSelectMemory(mem, displayMemories);
     }
   };
 
@@ -74,6 +78,49 @@ export const MemoryStoryPage = ({ onNavigate, onSelectMemory, isContributorMode 
       // However, for immediate feedback without cursor jumping, we can update local state.
       setDisplayMemories(prev => prev.map(m => m.id === mem.id ? { ...m, caption: newCaption } : m));
     }
+  };
+
+  // Drag and Drop Handlers
+  const handleDragStart = (e, id) => {
+    setDraggedMemId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', id); // Required for Firefox
+  };
+
+  const handleDragOver = (e, id) => {
+    e.preventDefault(); // Necessary to allow drop
+    if (id !== dragOverMemId) {
+      setDragOverMemId(id);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedMemId(null);
+    setDragOverMemId(null);
+  };
+
+  const handleDrop = (e, targetId) => {
+    e.preventDefault();
+    if (!draggedMemId || draggedMemId === targetId) {
+      handleDragEnd();
+      return;
+    }
+
+    const draggedIndex = displayMemories.findIndex((m) => m.id === draggedMemId);
+    const targetIndex = displayMemories.findIndex((m) => m.id === targetId);
+
+    if (draggedIndex !== -1 && targetIndex !== -1) {
+      const newList = [...displayMemories];
+      const [draggedItem] = newList.splice(draggedIndex, 1);
+      newList.splice(targetIndex, 0, draggedItem);
+      
+      setDisplayMemories(newList);
+      
+      // Save new order to storage
+      letterStorage.saveMemoryOrder(newList.map(m => m.id));
+      soundService.playClick();
+    }
+    handleDragEnd();
   };
 
   const processImageFile = (file) => {
@@ -207,11 +254,16 @@ export const MemoryStoryPage = ({ onNavigate, onSelectMemory, isContributorMode 
           ${displayMemories.map((mem, idx) => html`
             <div
               key=${mem.id || idx}
-              className=${`polaroid-frame ${mem.type === 'video' ? 'polaroid-frame-video' : ''}`}
+              className=${`polaroid-frame ${mem.type === 'video' ? 'polaroid-frame-video' : ''} ${draggedMemId === mem.id ? 'polaroid-dragging' : ''} ${dragOverMemId === mem.id ? 'polaroid-drag-over' : ''}`}
               style=${{
                 '--rot': `${mem.rotation || (idx % 2 === 0 ? -1.8 : 1.8)}deg`,
                 '--tape-rot': `${(idx % 3 === 0 ? -2 : (idx % 3 === 1 ? 1.5 : -0.8))}deg`
               }}
+              draggable=${true}
+              onDragStart=${(e) => handleDragStart(e, mem.id)}
+              onDragOver=${(e) => handleDragOver(e, mem.id)}
+              onDragEnd=${handleDragEnd}
+              onDrop=${(e) => handleDrop(e, mem.id)}
               onClick=${() => handleCardClick(mem)}
               title=${mem.type === 'video' ? 'Click to play video' : 'Click to view photo'}
             >

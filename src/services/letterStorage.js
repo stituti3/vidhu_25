@@ -1,7 +1,7 @@
 // Letter & Photo Storage Service
 // Handles persistence for Contributor Letters & Photos in localStorage + Backend API Sync
-import { BAKED_LETTERS } from '../data/baked_letters.js?v=1786639408';
-import { BAKED_MEMORIES } from '../data/baked_memories.js?v=1786639408';
+import { BAKED_LETTERS } from '../data/baked_letters.js?v=1786643918';
+import { BAKED_MEMORIES } from '../data/baked_memories.js?v=1786643918';
 
 const STORAGE_KEYS = {
   MY_LETTER: 'dear_dewey_my_letter_v1',
@@ -9,7 +9,8 @@ const STORAGE_KEYS = {
   DELETED_LETTER_IDS: 'dear_dewey_deleted_letter_ids_v1',
   DELETED_MEMORY_IDS: 'dear_dewey_deleted_memory_ids_v1',
   CUSTOM_MEMORIES: 'dear_dewey_custom_memories_v1',
-  LETTER_ORDER: 'dear_dewey_letter_order_v1'
+  LETTER_ORDER: 'dear_dewey_letter_order_v1',
+  MEMORY_ORDER: 'dear_dewey_memory_order_v1'
 };
 
 class LetterStorageService {
@@ -236,6 +237,24 @@ class LetterStorageService {
     }
   }
 
+  getMemoryOrder() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.MEMORY_ORDER);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  saveMemoryOrder(orderedIds) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.MEMORY_ORDER, JSON.stringify(orderedIds));
+      this.notify();
+    } catch (e) {
+      console.error('Error saving memory order:', e);
+    }
+  }
+
   getCustomMemories() {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.CUSTOM_MEMORIES);
@@ -420,7 +439,22 @@ class LetterStorageService {
 
     const customStandalone = this.getCustomMemories();
 
-    return [...customStandalone, ...uploaded, ...activeDefaults];
+    const combined = [...customStandalone, ...uploaded, ...activeDefaults];
+
+    // Sort combined memories based on saved order
+    const order = this.getMemoryOrder();
+    if (order && order.length > 0) {
+      combined.sort((a, b) => {
+        const indexA = order.indexOf(a.id);
+        const indexB = order.indexOf(b.id);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return 0;
+      });
+    }
+
+    return combined;
   }
 
   deleteLetter(letterId) {

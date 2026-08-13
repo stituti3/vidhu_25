@@ -1,13 +1,13 @@
-import { Navbar } from './components/Navbar.js?v=1786639408';
-import { ParticleBackground } from './components/ParticleBackground.js?v=1786639408';
-import { FullScreenEnvelope } from './components/FullScreenEnvelope.js?v=1786639408';
-import { MemoryStoryPage } from './pages/MemoryStoryPage.js?v=1786639408';
-import { LettersPage } from './pages/LettersPage.js?v=1786639408';
-import { CakePage } from './pages/CakePage.js?v=1786639408';
-import { BalloonGamePage } from './pages/BalloonGamePage.js?v=1786639408';
-import { WriteLetterPage } from './pages/WriteLetterPage.js?v=1786639408';
-import { soundService } from './services/soundEngine.js?v=1786639408';
-import { letterStorage } from './services/letterStorage.js?v=1786639408';
+import { Navbar } from './components/Navbar.js?v=1786643918';
+import { ParticleBackground } from './components/ParticleBackground.js?v=1786643918';
+import { FullScreenEnvelope } from './components/FullScreenEnvelope.js?v=1786643918';
+import { MemoryStoryPage } from './pages/MemoryStoryPage.js?v=1786643918';
+import { LettersPage } from './pages/LettersPage.js?v=1786643918';
+import { CakePage } from './pages/CakePage.js?v=1786643918';
+import { BalloonGamePage } from './pages/BalloonGamePage.js?v=1786643918';
+import { WriteLetterPage } from './pages/WriteLetterPage.js?v=1786643918';
+import { soundService } from './services/soundEngine.js?v=1786643918';
+import { letterStorage } from './services/letterStorage.js?v=1786643918';
 
 const { useState, useEffect } = window.React;
 const html = window.htm.bind(window.React.createElement);
@@ -17,6 +17,7 @@ export function App() {
   const [navigationData, setNavigationData] = useState(null);
   const [currentTheme, setCurrentTheme] = useState('theme-editorial');
   const [activeMemory, setActiveMemory] = useState(null);
+  const [currentMemoryList, setCurrentMemoryList] = useState([]);
   const [hasSubmittedLetter, setHasSubmittedLetter] = useState(letterStorage.hasSubmittedLetter());
 
   // Check URL query parameters for Shareable Contributor Mode (?mode=write or ?write=1)
@@ -59,15 +60,48 @@ export function App() {
     setActiveMemory(null);
   };
 
-  const handleDeleteActiveMemory = () => {
+  const handleDeleteActiveMemory = (e) => {
+    e.stopPropagation();
     if (!activeMemory) return;
-    const confirmDelete = window.confirm(`Are you sure you want to remove this photo from the Polaroid wall?`);
+    const confirmDelete = window.confirm(`Are you sure you want to delete this ${activeMemory.type === 'video' ? 'video' : 'photo'}?`);
     if (confirmDelete) {
       soundService.playClick();
       letterStorage.deleteMemory(activeMemory.id);
       setActiveMemory(null);
     }
   };
+
+  // Slideshow Handlers
+  const handleNextMemory = (e) => {
+    e.stopPropagation();
+    if (!currentMemoryList || currentMemoryList.length === 0) return;
+    const currentIndex = currentMemoryList.findIndex(m => m.id === activeMemory.id);
+    if (currentIndex !== -1 && currentIndex < currentMemoryList.length - 1) {
+      soundService.playClick();
+      setActiveMemory(currentMemoryList[currentIndex + 1]);
+    }
+  };
+
+  const handlePrevMemory = (e) => {
+    e.stopPropagation();
+    if (!currentMemoryList || currentMemoryList.length === 0) return;
+    const currentIndex = currentMemoryList.findIndex(m => m.id === activeMemory.id);
+    if (currentIndex > 0) {
+      soundService.playClick();
+      setActiveMemory(currentMemoryList[currentIndex - 1]);
+    }
+  };
+
+  const isEnvelopeOpen = activePage !== 'landing';
+
+  // Determine if next/prev arrows should be shown
+  let showPrev = false;
+  let showNext = false;
+  if (activeMemory && currentMemoryList && currentMemoryList.length > 0) {
+    const currentIndex = currentMemoryList.findIndex(m => m.id === activeMemory.id);
+    showPrev = currentIndex > 0;
+    showNext = currentIndex !== -1 && currentIndex < currentMemoryList.length - 1;
+  }
 
   const renderActiveCardContent = () => {
     // 1. Contributor Mode (Strictly 3 Pages: 1. Landing Envelope, 2. Polaroid Wall with their photos, 3. Their Letter)
@@ -86,7 +120,7 @@ export function App() {
           return html`
             <${MemoryStoryPage}
               onNavigate=${handleNavigate}
-              onSelectMemory=${(mem) => setActiveMemory(mem)}
+              onSelectMemory=${(mem, list) => { setActiveMemory(mem); setCurrentMemoryList(list || []); }}
               isContributorMode=${true}
             />
           `;
@@ -105,11 +139,9 @@ export function App() {
         return html`<${LettersPage} onNavigate=${handleNavigate} />`;
       case 'memories':
       default:
-        return html`<${MemoryStoryPage} onNavigate=${handleNavigate} onSelectMemory=${(mem) => setActiveMemory(mem)} isContributorMode=${false} />`;
+        return html`<${MemoryStoryPage} onNavigate=${handleNavigate} onSelectMemory=${(mem, list) => { setActiveMemory(mem); setCurrentMemoryList(list || []); }} isContributorMode=${false} />`;
     }
   };
-
-  const isEnvelopeOpen = activePage !== 'landing';
 
   return html`
     <div className="app-layout">
@@ -169,6 +201,18 @@ export function App() {
                 ✕
               </button>
             </div>
+
+            <!-- Navigation Arrows -->
+            ${showPrev && html`
+              <button className="polaroid-nav-btn nav-btn-left" onClick=${handlePrevMemory} aria-label="Previous Memory">
+                ❮
+              </button>
+            `}
+            ${showNext && html`
+              <button className="polaroid-nav-btn nav-btn-right" onClick=${handleNextMemory} aria-label="Next Memory">
+                ❯
+              </button>
+            `}
 
             <!-- Photo or Video Area -->
             <div className="polaroid-lightbox-photo">
