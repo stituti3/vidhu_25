@@ -1,6 +1,6 @@
-import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786635549';
-import { soundService } from '../services/soundEngine.js?v=1786635549';
-import { letterStorage } from '../services/letterStorage.js?v=1786635549';
+import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786636111';
+import { soundService } from '../services/soundEngine.js?v=1786636111';
+import { letterStorage } from '../services/letterStorage.js?v=1786636111';
 
 const { useState, useEffect, useRef } = window.React;
 const html = window.htm.bind(window.React.createElement);
@@ -65,6 +65,15 @@ export const MemoryStoryPage = ({ onNavigate, onSelectMemory, isContributorMode 
     // Show toast
     setToastMessage(`"${title}" has been removed from the wall ✓`);
     setTimeout(() => setToastMessage(''), 3500);
+  };
+
+  const handleInlineCaptionChange = (mem, newCaption) => {
+    if (mem.isCustom) {
+      letterStorage.updateMemoryCaption(mem.id, newCaption);
+      // We don't need to manually update state here because letterStorage.subscribe will fire refreshMemories().
+      // However, for immediate feedback without cursor jumping, we can update local state.
+      setDisplayMemories(prev => prev.map(m => m.id === mem.id ? { ...m, caption: newCaption } : m));
+    }
   };
 
   const processImageFile = (file) => {
@@ -247,11 +256,22 @@ export const MemoryStoryPage = ({ onNavigate, onSelectMemory, isContributorMode 
               </div>
 
               <!-- Uniform Bottom Note Area with Handwriting Font -->
-              <div className="polaroid-footer-area">
-                ${mem.caption && html`
-                  <div className="polaroid-caption font-handwriting">
-                    ${mem.caption}
-                  </div>
+              <div className="polaroid-footer-area" onClick=${(e) => e.stopPropagation()}>
+                ${mem.isCustom ? html`
+                  <input
+                    type="text"
+                    className="polaroid-caption font-handwriting"
+                    style=${{ background: 'transparent', border: 'none', width: '100%', textAlign: 'center', margin: 0, padding: 0 }}
+                    placeholder="Add a caption..."
+                    value=${mem.caption || ''}
+                    onChange=${(e) => handleInlineCaptionChange(mem, e.target.value)}
+                  />
+                ` : html`
+                  ${mem.caption && html`
+                    <div className="polaroid-caption font-handwriting">
+                      ${mem.caption}
+                    </div>
+                  `}
                 `}
                 ${mem.date && html`
                   <div className="polaroid-date-stamp font-handwriting-sub">

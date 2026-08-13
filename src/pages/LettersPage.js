@@ -1,7 +1,7 @@
-import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786635549';
-import { soundService } from '../services/soundEngine.js?v=1786635549';
-import { letterStorage } from '../services/letterStorage.js?v=1786635549';
-import { ShareModal } from '../components/ShareModal.js?v=1786635549';
+import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786636111';
+import { soundService } from '../services/soundEngine.js?v=1786636111';
+import { letterStorage } from '../services/letterStorage.js?v=1786636111';
+import { ShareModal } from '../components/ShareModal.js?v=1786636111';
 
 const { useState, useEffect } = window.React;
 const html = window.htm.bind(window.React.createElement);
@@ -198,41 +198,6 @@ export const LettersPage = ({ onNavigate }) => {
                   </div>
                 </div>
 
-                <!-- Attached Media Display -->
-                ${selectedLetter.media && selectedLetter.media.length > 0 && html`
-                  <div className="letter-attachments-section" style=${{ display: 'flex', flexWrap: 'wrap', gap: '15px', marginTop: '30px', justifyContent: 'center' }}>
-                    ${selectedLetter.media.map((item, idx) => html`
-                      <div 
-                        key=${item.id || idx}
-                        className="polaroid-frame"
-                        style=${{ transform: `rotate(${idx % 2 === 0 ? -2 : 2}deg)`, scale: '0.85', cursor: 'pointer', margin: '-10px' }}
-                        onClick=${() => setActiveMediaPreview(item)}
-                      >
-                        <div className="polaroid-washi-tape"></div>
-                        <div className="polaroid-photo-container">
-                          ${item.type === 'video' ? html`
-                            <video 
-                              src=${item.url} 
-                              className="polaroid-embedded-video" 
-                              playsinline 
-                              controls
-                              style=${{ width: '100%', height: '100%', objectFit: 'cover' }}
-                              onClick=${(e) => e.stopPropagation()}
-                            ></video>
-                          ` : html`
-                            <img src=${item.url} alt="Attached memory" />
-                          `}
-                        </div>
-                        ${item.caption && html`
-                          <div className="polaroid-footer-area font-handwriting" style=${{ fontSize: '1.1rem', textAlign: 'center', padding: '10px 5px' }}>
-                            ${item.caption}
-                          </div>
-                        `}
-                      </div>
-                    `)}
-                  </div>
-                `}
-
                 <!-- Footer with Postmark -->
                 <div className="love-letter-footer" style=${{ marginTop: '20px', alignItems: 'flex-end' }}>
                   <div className="love-letter-footer-left" style=${{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -253,6 +218,29 @@ export const LettersPage = ({ onNavigate }) => {
                   </div>
                 </div>
 
+                <!-- Letter Actions -->
+                ${selectedLetter.isCustom && html`
+                  <div style=${{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '30px' }}>
+                    <button
+                      onClick=${() => {
+                        soundService.playSparkle();
+                        onNavigate('write_letter', selectedLetter.id);
+                      }}
+                      className="btn btn-secondary"
+                    >
+                      <span>Edit Letter ✍️</span>
+                    </button>
+                    <button
+                      onClick=${() => {
+                        soundService.playSparkle();
+                        onNavigate('write_letter');
+                      }}
+                      className="btn btn-gold"
+                    >
+                      <span>Add Another Letter ➕</span>
+                    </button>
+                  </div>
+                `}
               </div>
             </div>
           `}

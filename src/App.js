@@ -1,19 +1,20 @@
-import { Navbar } from './components/Navbar.js?v=1786635549';
-import { ParticleBackground } from './components/ParticleBackground.js?v=1786635549';
-import { FullScreenEnvelope } from './components/FullScreenEnvelope.js?v=1786635549';
-import { MemoryStoryPage } from './pages/MemoryStoryPage.js?v=1786635549';
-import { LettersPage } from './pages/LettersPage.js?v=1786635549';
-import { CakePage } from './pages/CakePage.js?v=1786635549';
-import { BalloonGamePage } from './pages/BalloonGamePage.js?v=1786635549';
-import { WriteLetterPage } from './pages/WriteLetterPage.js?v=1786635549';
-import { soundService } from './services/soundEngine.js?v=1786635549';
-import { letterStorage } from './services/letterStorage.js?v=1786635549';
+import { Navbar } from './components/Navbar.js?v=1786636111';
+import { ParticleBackground } from './components/ParticleBackground.js?v=1786636111';
+import { FullScreenEnvelope } from './components/FullScreenEnvelope.js?v=1786636111';
+import { MemoryStoryPage } from './pages/MemoryStoryPage.js?v=1786636111';
+import { LettersPage } from './pages/LettersPage.js?v=1786636111';
+import { CakePage } from './pages/CakePage.js?v=1786636111';
+import { BalloonGamePage } from './pages/BalloonGamePage.js?v=1786636111';
+import { WriteLetterPage } from './pages/WriteLetterPage.js?v=1786636111';
+import { soundService } from './services/soundEngine.js?v=1786636111';
+import { letterStorage } from './services/letterStorage.js?v=1786636111';
 
 const { useState, useEffect } = window.React;
 const html = window.htm.bind(window.React.createElement);
 
 export function App() {
   const [activePage, setActivePage] = useState('landing');
+  const [navigationData, setNavigationData] = useState(null);
   const [currentTheme, setCurrentTheme] = useState('theme-editorial');
   const [activeMemory, setActiveMemory] = useState(null);
   const [hasSubmittedLetter, setHasSubmittedLetter] = useState(letterStorage.hasSubmittedLetter());
@@ -37,10 +38,11 @@ export function App() {
     };
   }, [activeMemory]);
 
-  const handleNavigate = (pageId) => {
+  const handleNavigate = (pageId, data = null) => {
     setActiveMemory(null);
     setHasSubmittedLetter(letterStorage.hasSubmittedLetter());
     setActivePage(pageId);
+    setNavigationData(data);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -75,6 +77,7 @@ export function App() {
           return html`
             <${WriteLetterPage}
               onNavigate=${handleNavigate}
+              initialLetterId=${navigationData}
               isContributorMode=${true}
             />
           `;
@@ -93,7 +96,7 @@ export function App() {
     // 2. Full Celebrant Experience (Vidhanth & Host)
     switch (activePage) {
       case 'write_letter':
-        return html`<${WriteLetterPage} onNavigate=${handleNavigate} isContributorMode=${false} />`;
+        return html`<${WriteLetterPage} onNavigate=${handleNavigate} initialLetterId=${navigationData} isContributorMode=${false} />`;
       case 'balloons':
         return html`<${BalloonGamePage} onNavigate=${handleNavigate} />`;
       case 'cake':

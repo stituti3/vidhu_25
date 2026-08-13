@@ -229,6 +229,25 @@ class LetterStorageService {
     }
   }
 
+  updateMemoryCaption(memId, newCaption) {
+    try {
+      const existing = localStorage.getItem(STORAGE_KEYS.CUSTOM_MEMORIES);
+      if (!existing) return false;
+      const list = JSON.parse(existing);
+      const idx = list.findIndex(m => m.id === memId);
+      if (idx !== -1) {
+        list[idx].caption = newCaption;
+        localStorage.setItem(STORAGE_KEYS.CUSTOM_MEMORIES, JSON.stringify(list));
+        this.notify();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error('Error updating custom memory caption:', e);
+      return false;
+    }
+  }
+
   getMyUploadedMemories() {
     const myLetters = this.getMyLetters();
     if (myLetters.length === 0) return [];

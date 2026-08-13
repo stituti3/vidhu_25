@@ -1,5 +1,5 @@
-import { soundService } from '../services/soundEngine.js?v=1786635549';
-import { launchConfetti } from './ConfettiLauncher.js?v=1786635549';
+import { soundService } from '../services/soundEngine.js?v=1786636111';
+import { launchConfetti } from './ConfettiLauncher.js?v=1786636111';
 
 const { useState, useEffect, useRef } = window.React;
 const html = window.htm.bind(window.React.createElement);
