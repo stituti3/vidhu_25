@@ -1,6 +1,7 @@
 // Letter & Photo Storage Service
 // Handles persistence for Contributor Letters & Photos in localStorage + Backend API Sync
 import { BAKED_LETTERS } from '../data/baked_letters.js?v=1786638569';
+import { BAKED_MEMORIES } from '../data/baked_memories.js?v=1786638569';
 
 const STORAGE_KEYS = {
   MY_LETTER: 'dear_dewey_my_letter_v1',
@@ -240,7 +241,14 @@ class LetterStorageService {
       const data = localStorage.getItem(STORAGE_KEYS.CUSTOM_MEMORIES);
       const list = data ? JSON.parse(data) : [];
       const deletedIds = this.getDeletedMemoryIds();
-      return list.filter(m => !deletedIds.includes(m.id));
+      
+      const activeLocal = list.filter(m => !deletedIds.includes(m.id));
+      
+      const activeBaked = BAKED_MEMORIES.filter(
+        b => !deletedIds.includes(b.id) && !activeLocal.some((l) => l.id === b.id)
+      );
+      
+      return [...activeLocal, ...activeBaked];
     } catch (e) {
       console.warn('Error reading custom memories:', e);
       return [];
@@ -266,6 +274,14 @@ class LetterStorageService {
 
       list.unshift(newMemory);
       localStorage.setItem(STORAGE_KEYS.CUSTOM_MEMORIES, JSON.stringify(list));
+
+      // Sync to backend server if available
+      fetch('/api/memories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newMemory)
+      }).catch((e) => console.warn('Could not sync memory to server API:', e));
+
       this.notify();
       return newMemory;
     } catch (e) {
@@ -283,6 +299,14 @@ class LetterStorageService {
       if (idx !== -1) {
         list[idx].caption = newCaption;
         localStorage.setItem(STORAGE_KEYS.CUSTOM_MEMORIES, JSON.stringify(list));
+        
+        // Sync update to backend
+        fetch('/api/memories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(list[idx])
+        }).catch((e) => console.warn('Could not sync memory update to server API:', e));
+
         this.notify();
         return true;
       }
@@ -444,6 +468,11 @@ class LetterStorageService {
       if (!deletedMemIds.includes(memoryId)) {
         deletedMemIds.push(memoryId);
         localStorage.setItem(STORAGE_KEYS.DELETED_MEMORY_IDS, JSON.stringify(deletedMemIds));
+
+        // Sync delete to backend API
+        fetch(`/api/memories?id=${encodeURIComponent(memoryId)}`, {
+          method: 'DELETE'
+        }).catch((e) => console.warn('Could not sync memory deletion to server API:', e));
       }
 
       // 2. Remove from community letters' media array

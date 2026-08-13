@@ -12,6 +12,7 @@ import urllib.parse
 PORT = 8080
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 LETTERS_FILE = os.path.join(DATA_DIR, 'community_letters.json')
+MEMORIES_FILE = os.path.join(DATA_DIR, 'custom_memories.json')
 TUNNEL_FILE = os.path.join(DATA_DIR, 'public_tunnel.json')
 
 # Ensure data directory exists
@@ -106,6 +107,24 @@ def save_letters(letters):
         print(f"Error saving letters: {e}")
         return False
 
+def read_memories():
+    try:
+        if os.path.exists(MEMORIES_FILE):
+            with open(MEMORIES_FILE, 'r') as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"Error reading memories: {e}")
+    return []
+
+def save_memories(memories):
+    try:
+        with open(MEMORIES_FILE, 'w') as f:
+            json.dump(memories, f, indent=2)
+        return True
+    except Exception as e:
+        print(f"Error saving memories: {e}")
+        return False
+
 class CustomHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         # Enable CORS and disable caching for real-time updates
@@ -133,7 +152,18 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(body)
             return
 
-        # 2. Public Tunnel Info Endpoint
+        # 2. Memories API Endpoint
+        if parsed.path == '/api/memories':
+            memories = read_memories()
+            body = json.dumps(memories).encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
+        # 3. Public Tunnel Info Endpoint
         if parsed.path == '/api/tunnel':
             body = json.dumps(tunnel_state).encode('utf-8')
             self.send_response(200)
@@ -182,6 +212,39 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(err_body)
                 return
 
+        if parsed.path == '/api/memories':
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length)
+            try:
+                memory_payload = json.loads(post_data.decode('utf-8'))
+                memories = read_memories()
+                memory_id = memory_payload.get('id') or f"mem-{int(time.time() * 1000)}"
+                memory_payload['id'] = memory_id
+
+                existing_idx = next((i for i, m in enumerate(memories) if m.get('id') == memory_id), -1)
+                if existing_idx >= 0:
+                    memories[existing_idx] = memory_payload
+                else:
+                    memories.insert(0, memory_payload)
+
+                save_memories(memories)
+
+                response_body = json.dumps(memory_payload).encode('utf-8')
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Content-Length', str(len(response_body)))
+                self.end_headers()
+                self.wfile.write(response_body)
+                return
+            except Exception as e:
+                err_body = json.dumps({"error": str(e)}).encode('utf-8')
+                self.send_response(400)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Content-Length', str(len(err_body)))
+                self.end_headers()
+                self.wfile.write(err_body)
+                return
+
         self.send_response(404)
         self.end_headers()
 
@@ -211,6 +274,36 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
                 return
             else:
                 err_body = json.dumps({"error": "Missing letter id"}).encode('utf-8')
+                self.send_response(400)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Content-Length', str(len(err_body)))
+                self.end_headers()
+                self.wfile.write(err_body)
+                return
+
+        if parsed.path.startswith('/api/memories'):
+            query = urllib.parse.parse_qs(parsed.query)
+            memory_id = query.get('id', [None])[0]
+
+            if not memory_id:
+                parts = parsed.path.strip('/').split('/')
+                if len(parts) > 2:
+                    memory_id = parts[2]
+
+            if memory_id:
+                memories = read_memories()
+                filtered = [m for m in memories if m.get('id') != memory_id]
+                save_memories(filtered)
+
+                response_body = json.dumps({"success": True, "deletedId": memory_id}).encode('utf-8')
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Content-Length', str(len(response_body)))
+                self.end_headers()
+                self.wfile.write(response_body)
+                return
+            else:
+                err_body = json.dumps({"error": "Missing memory id"}).encode('utf-8')
                 self.send_response(400)
                 self.send_header('Content-Type', 'application/json')
                 self.send_header('Content-Length', str(len(err_body)))
