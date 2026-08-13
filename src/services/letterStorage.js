@@ -1,7 +1,7 @@
 // Letter & Photo Storage Service
 // Handles persistence for Contributor Letters & Photos in localStorage + Backend API Sync
-import { BAKED_LETTERS } from '../data/baked_letters.js?v=1786652605';
-import { BAKED_MEMORIES } from '../data/baked_memories.js?v=1786652605';
+import { BAKED_LETTERS } from '../data/baked_letters.js?v=1786653809';
+import { BAKED_MEMORIES } from '../data/baked_memories.js?v=1786653809';
 
 const STORAGE_KEYS = {
   MY_LETTER: 'dear_dewey_my_letter_v1',
@@ -16,6 +16,34 @@ const STORAGE_KEYS = {
 class LetterStorageService {
   constructor() {
     this.listeners = new Set();
+    this.serverMemories = [];
+    this.serverLetters = [];
+    this.fetchBackendData();
+  }
+
+  async fetchBackendData() {
+    try {
+      const [memRes, letRes] = await Promise.all([
+        fetch('/api/memories', { cache: 'no-store' }).catch(() => null),
+        fetch('/api/letters', { cache: 'no-store' }).catch(() => null)
+      ]);
+      
+      let updated = false;
+      if (memRes && memRes.ok) {
+        this.serverMemories = await memRes.json();
+        updated = true;
+      }
+      if (letRes && letRes.ok) {
+        this.serverLetters = await letRes.json();
+        updated = true;
+      }
+      
+      if (updated) {
+        this.notify();
+      }
+    } catch (e) {
+      // Backend not accessible
+    }
   }
 
   subscribe(listener) {
@@ -71,7 +99,13 @@ class LetterStorageService {
           const deletedIds = this.getDeletedLetterIds();
           const merged = Array.from(combinedMap.values()).filter((l) => !deletedIds.includes(l.id));
 
-          localStorage.setItem(STORAGE_KEYS.COMMUNITY_LETTERS, JSON.stringify(merged));
+          this.serverLetters = merged;
+
+          try {
+            localStorage.setItem(STORAGE_KEYS.COMMUNITY_LETTERS, JSON.stringify(merged));
+          } catch (e) {
+            console.warn('localStorage full, relying on server cache for letters');
+          }
           this.notify();
           return merged;
         }
@@ -138,7 +172,14 @@ class LetterStorageService {
       } else {
         community.unshift(letterData);
       }
-      localStorage.setItem(STORAGE_KEYS.COMMUNITY_LETTERS, JSON.stringify(community));
+      
+      this.serverLetters = community;
+      
+      try {
+        localStorage.setItem(STORAGE_KEYS.COMMUNITY_LETTERS, JSON.stringify(community));
+      } catch (e) {
+        console.warn('localStorage full, relying on server sync for community letters');
+      }
 
       // 3. Sync to backend server if available
       fetch('/api/letters', {
@@ -158,9 +199,16 @@ class LetterStorageService {
   getCommunityLetters() {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.COMMUNITY_LETTERS);
-      const list = data ? JSON.parse(data) : [];
+      const localList = data ? JSON.parse(data) : [];
       const deletedIds = this.getDeletedLetterIds();
-      return list.filter((l) => !deletedIds.includes(l.id));
+      
+      const combinedMap = new Map();
+      this.serverLetters.forEach(l => combinedMap.set(l.id, l));
+      localList.forEach(l => {
+        if (!combinedMap.has(l.id)) combinedMap.set(l.id, l);
+      });
+      
+      return Array.from(combinedMap.values()).filter(l => !deletedIds.includes(l.id));
     } catch (e) {
       console.warn('Error reading community letters:', e);
       return [];
@@ -262,12 +310,20 @@ class LetterStorageService {
       const deletedIds = this.getDeletedMemoryIds();
       
       const activeLocal = list.filter(m => !deletedIds.includes(m.id));
+      const activeServer = this.serverMemories.filter(m => !deletedIds.includes(m.id));
+      
+      const combinedMap = new Map();
+      activeServer.forEach(m => combinedMap.set(m.id, m));
+      activeLocal.forEach(m => {
+        if (!combinedMap.has(m.id)) combinedMap.set(m.id, m);
+      });
+      const activeCombined = Array.from(combinedMap.values());
       
       const activeBaked = BAKED_MEMORIES.filter(
-        b => !deletedIds.includes(b.id) && !activeLocal.some((l) => l.id === b.id)
+        b => !deletedIds.includes(b.id) && !activeCombined.some((l) => l.id === b.id)
       );
       
-      return [...activeLocal, ...activeBaked];
+      return [...activeCombined, ...activeBaked];
     } catch (e) {
       console.warn('Error reading custom memories:', e);
       return [];
@@ -292,7 +348,13 @@ class LetterStorageService {
       };
 
       list.unshift(newMemory);
-      localStorage.setItem(STORAGE_KEYS.CUSTOM_MEMORIES, JSON.stringify(list));
+      this.serverMemories.unshift(newMemory);
+      
+      try {
+        localStorage.setItem(STORAGE_KEYS.CUSTOM_MEMORIES, JSON.stringify(list));
+      } catch (e) {
+        console.warn('localStorage full, relying on server sync for custom memory');
+      }
 
       // Sync to backend server if available
       fetch('/api/memories', {
@@ -317,7 +379,15 @@ class LetterStorageService {
       const idx = list.findIndex(m => m.id === memId);
       if (idx !== -1) {
         list[idx].caption = newCaption;
-        localStorage.setItem(STORAGE_KEYS.CUSTOM_MEMORIES, JSON.stringify(list));
+        try {
+          localStorage.setItem(STORAGE_KEYS.CUSTOM_MEMORIES, JSON.stringify(list));
+        } catch (e) {
+          console.warn('localStorage full for updating caption');
+        }
+        
+        // Also update in-memory
+        const sIdx = this.serverMemories.findIndex(m => m.id === memId);
+        if (sIdx !== -1) this.serverMemories[sIdx].caption = newCaption;
         
         // Sync update to backend
         fetch('/api/memories', {
