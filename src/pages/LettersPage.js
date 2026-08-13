@@ -1,7 +1,7 @@
-import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786637042';
-import { soundService } from '../services/soundEngine.js?v=1786637042';
-import { letterStorage } from '../services/letterStorage.js?v=1786637042';
-import { ShareModal } from '../components/ShareModal.js?v=1786637042';
+import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786637514';
+import { soundService } from '../services/soundEngine.js?v=1786637514';
+import { letterStorage } from '../services/letterStorage.js?v=1786637514';
+import { ShareModal } from '../components/ShareModal.js?v=1786637514';
 
 const { useState, useEffect } = window.React;
 const html = window.htm.bind(window.React.createElement);
@@ -14,6 +14,10 @@ export const LettersPage = ({ onNavigate }) => {
   const [letterPendingDelete, setLetterPendingDelete] = useState(null);
   const [activeMediaPreview, setActiveMediaPreview] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
+  
+  // Drag and Drop State
+  const [draggedItemId, setDraggedItemId] = useState(null);
+  const [dragOverItemId, setDragOverItemId] = useState(null);
 
   const refreshLetters = (preferredId = null) => {
     const list = letterStorage.getAllLetters(defaultLetters);
@@ -78,6 +82,53 @@ export const LettersPage = ({ onNavigate }) => {
     setLetterPendingDelete(letItem);
   };
 
+  const handleDragStart = (e, id) => {
+    setDraggedItemId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', id); // Required for Firefox
+  };
+
+  const handleDragOver = (e, id) => {
+    e.preventDefault(); // Necessary to allow drop
+    if (id !== dragOverItemId) {
+      setDragOverItemId(id);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItemId(null);
+    setDragOverItemId(null);
+  };
+
+  const handleDrop = (e, targetId) => {
+    e.preventDefault();
+    const sourceId = draggedItemId;
+    if (!sourceId || sourceId === targetId) {
+      handleDragEnd();
+      return;
+    }
+
+    const currentOrder = allLetters.map(l => l.id);
+    const sourceIdx = currentOrder.indexOf(sourceId);
+    const targetIdx = currentOrder.indexOf(targetId);
+
+    if (sourceIdx > -1 && targetIdx > -1) {
+      const newOrder = [...currentOrder];
+      const [removed] = newOrder.splice(sourceIdx, 1);
+      newOrder.splice(targetIdx, 0, removed);
+      
+      // Save
+      letterStorage.saveLetterOrder(newOrder);
+      
+      // Update local state immediately for snappy feel
+      const newLetters = newOrder.map(id => allLetters.find(l => l.id === id));
+      setAllLetters(newLetters);
+    }
+    
+    soundService.playSparkle(); // playful sound on reorder
+    handleDragEnd();
+  };
+
   // Confirm and execute letter deletion
   const handleConfirmDelete = () => {
     if (!letterPendingDelete) return;
@@ -128,8 +179,20 @@ export const LettersPage = ({ onNavigate }) => {
             ${allLetters.map((letItem) => html`
               <div
                 key=${letItem.id}
+                draggable="true"
+                onDragStart=${(e) => handleDragStart(e, letItem.id)}
+                onDragOver=${(e) => handleDragOver(e, letItem.id)}
+                onDragLeave=${() => setDragOverItemId(null)}
+                onDrop=${(e) => handleDrop(e, letItem.id)}
+                onDragEnd=${handleDragEnd}
                 onClick=${() => handleSelectLetter(letItem)}
                 className=${`letter-tab-btn ${selectedLetter && selectedLetter.id === letItem.id ? 'active' : ''} ${letItem.isCustom ? 'community-tab' : ''}`}
+                style=${{
+                  opacity: draggedItemId === letItem.id ? 0.5 : 1,
+                  transform: dragOverItemId === letItem.id ? 'scale(1.02) translateX(10px)' : 'scale(1)',
+                  transition: 'transform 0.2s ease, opacity 0.2s ease',
+                  borderTop: dragOverItemId === letItem.id ? '2px dashed rgba(193,155,108,0.5)' : 'none',
+                }}
                 role="tab"
                 aria-selected=${selectedLetter && selectedLetter.id === letItem.id}
               >

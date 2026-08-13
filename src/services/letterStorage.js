@@ -6,7 +6,8 @@ const STORAGE_KEYS = {
   COMMUNITY_LETTERS: 'dear_dewey_community_letters_v1',
   DELETED_LETTER_IDS: 'dear_dewey_deleted_letter_ids_v1',
   DELETED_MEMORY_IDS: 'dear_dewey_deleted_memory_ids_v1',
-  CUSTOM_MEMORIES: 'dear_dewey_custom_memories_v1'
+  CUSTOM_MEMORIES: 'dear_dewey_custom_memories_v1',
+  LETTER_ORDER: 'dear_dewey_letter_order_v1'
 };
 
 class LetterStorageService {
@@ -186,8 +187,44 @@ class LetterStorageService {
     const deletedIds = this.getDeletedLetterIds();
     const activeDefaults = defaultLetters.filter((l) => !deletedIds.includes(l.id));
 
-    // Return community letters at the top, followed by default letters
-    return [...community, ...activeDefaults];
+    const combined = [...community, ...activeDefaults];
+    
+    // Sort combined letters based on saved order
+    const order = this.getLetterOrder();
+    if (order && order.length > 0) {
+      combined.sort((a, b) => {
+        const indexA = order.indexOf(a.id);
+        const indexB = order.indexOf(b.id);
+        // If both exist in order array, sort by index
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        // If only A exists, it comes first
+        if (indexA !== -1) return -1;
+        // If only B exists, it comes first
+        if (indexB !== -1) return 1;
+        // If neither exists, maintain relative order (or default sorting)
+        return 0;
+      });
+    }
+
+    return combined;
+  }
+
+  getLetterOrder() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.LETTER_ORDER);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  saveLetterOrder(orderedIds) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.LETTER_ORDER, JSON.stringify(orderedIds));
+      this.notify();
+    } catch (e) {
+      console.error('Error saving letter order:', e);
+    }
   }
 
   getCustomMemories() {
