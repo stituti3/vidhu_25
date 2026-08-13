@@ -1,6 +1,6 @@
-import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786656051';
-import { soundService } from '../services/soundEngine.js?v=1786656051';
-import { launchConfetti } from '../components/ConfettiLauncher.js?v=1786656051';
+import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786656152';
+import { soundService } from '../services/soundEngine.js?v=1786656152';
+import { launchConfetti } from '../components/ConfettiLauncher.js?v=1786656152';
 
 const { useState } = window.React;
 const html = window.htm.bind(window.React.createElement);
