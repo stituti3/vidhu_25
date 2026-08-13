@@ -1,5 +1,6 @@
 // Letter & Photo Storage Service
 // Handles persistence for Contributor Letters & Photos in localStorage + Backend API Sync
+import { BAKED_LETTERS } from '../data/baked_letters.js?v=1786638569';
 
 const STORAGE_KEYS = {
   MY_LETTER: 'dear_dewey_my_letter_v1',
@@ -187,7 +188,14 @@ class LetterStorageService {
     const deletedIds = this.getDeletedLetterIds();
     const activeDefaults = defaultLetters.filter((l) => !deletedIds.includes(l.id));
 
-    const combined = [...community, ...activeDefaults];
+    // Merge baked letters, avoiding duplicates with community/defaults
+    const activeBaked = BAKED_LETTERS.filter(
+      (b) => !deletedIds.includes(b.id) && 
+             !community.some((c) => c.id === b.id) &&
+             !activeDefaults.some((d) => d.id === b.id)
+    );
+
+    const combined = [...community, ...activeBaked, ...activeDefaults];
     
     // Sort combined letters based on saved order
     const order = this.getLetterOrder();

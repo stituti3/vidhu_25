@@ -1,7 +1,7 @@
-import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786637514';
-import { soundService } from '../services/soundEngine.js?v=1786637514';
-import { launchConfetti } from '../components/ConfettiLauncher.js?v=1786637514';
-import { ShareModal } from '../components/ShareModal.js?v=1786637514';
+import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786638569';
+import { soundService } from '../services/soundEngine.js?v=1786638569';
+import { launchConfetti } from '../components/ConfettiLauncher.js?v=1786638569';
+import { ShareModal } from '../components/ShareModal.js?v=1786638569';
 
 const { useState, useEffect, useRef } = window.React;
 const html = window.htm.bind(window.React.createElement);
@@ -477,15 +477,7 @@ export const BalloonGamePage = ({ onNavigate }) => {
           <span>← Back to Cake</span>
         </button>
 
-        <button
-          onClick=${() => {
-            soundService.playSparkle();
-            setIsShareModalOpen(true);
-          }}
-          className="btn btn-gold"
-        >
-          <span>Share Full Card with Vidhanth 🎁</span>
-        </button>
+
 
         <button
           onClick=${() => {
