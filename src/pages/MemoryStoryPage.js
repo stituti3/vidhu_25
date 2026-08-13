@@ -1,6 +1,6 @@
-import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786659469';
-import { soundService } from '../services/soundEngine.js?v=1786659469';
-import { letterStorage } from '../services/letterStorage.js?v=1786659469';
+import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786659856';
+import { soundService } from '../services/soundEngine.js?v=1786659856';
+import { letterStorage } from '../services/letterStorage.js?v=1786659856';
 
 const { useState, useEffect, useRef } = window.React;
 const html = window.htm.bind(window.React.createElement);

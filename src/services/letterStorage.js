@@ -1,7 +1,7 @@
 // Letter & Photo Storage Service
 // Handles persistence for Contributor Letters & Photos in localStorage + Backend API Sync
-import { BAKED_LETTERS } from '../data/baked_letters.js?v=1786659469';
-import { BAKED_MEMORIES } from '../data/baked_memories.js?v=1786659469';
+import { BAKED_LETTERS } from '../data/baked_letters.js?v=1786659856';
+import { BAKED_MEMORIES } from '../data/baked_memories.js?v=1786659856';
 
 const STORAGE_KEYS = {
   MY_LETTER: 'dear_dewey_my_letter_v1',
@@ -33,6 +33,22 @@ class LetterStorageService {
 
   async fetchBackendData() {
     try {
+      // Auto-sync localStorage state to python backend for baking FIRST
+      try {
+        await fetch('/api/sync_state', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            memoryOrder: this.getMemoryOrder(),
+            letterOrder: this.getLetterOrder(),
+            customMemories: localStorage.getItem(STORAGE_KEYS.CUSTOM_MEMORIES) ? JSON.parse(localStorage.getItem(STORAGE_KEYS.CUSTOM_MEMORIES)) : [],
+            communityLetters: localStorage.getItem(STORAGE_KEYS.COMMUNITY_LETTERS) ? JSON.parse(localStorage.getItem(STORAGE_KEYS.COMMUNITY_LETTERS)) : []
+          })
+        });
+      } catch (e) {
+        // Ignore if sync fails
+      }
+      
       const [memRes, letRes] = await Promise.all([
         fetch('/api/memories', { cache: 'no-store' }).catch(() => null),
         fetch('/api/letters', { cache: 'no-store' }).catch(() => null)
@@ -68,7 +84,7 @@ class LetterStorageService {
         this.notify();
       }
     } catch (e) {
-      // Backend not accessible
+      console.error('Error fetching backend data:', e);
     }
   }
 
