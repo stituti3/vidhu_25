@@ -153,6 +153,23 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         # 2. Memories API Endpoint
+        
+        if parsed.path == '/api/sync_state':
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length)
+            try:
+                dump = json.loads(post_data.decode('utf-8'))
+                with open(os.path.join(DATA_DIR, 'local_storage_dump.json'), 'w') as f:
+                    json.dump(dump, f, indent=2)
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b'{"success": true}')
+                return
+            except Exception as e:
+                self.send_response(400)
+                self.end_headers()
+                return
+
         if parsed.path == '/api/memories':
             memories = read_memories()
             body = json.dumps(memories).encode('utf-8')
@@ -210,6 +227,23 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_header('Content-Length', str(len(err_body)))
                 self.end_headers()
                 self.wfile.write(err_body)
+                return
+
+        
+        if parsed.path == '/api/sync_state':
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length)
+            try:
+                dump = json.loads(post_data.decode('utf-8'))
+                with open(os.path.join(DATA_DIR, 'local_storage_dump.json'), 'w') as f:
+                    json.dump(dump, f, indent=2)
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b'{"success": true}')
+                return
+            except Exception as e:
+                self.send_response(400)
+                self.end_headers()
                 return
 
         if parsed.path == '/api/memories':
