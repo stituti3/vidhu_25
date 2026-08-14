@@ -1,7 +1,7 @@
 // Letter & Photo Storage Service
 // Handles persistence for Contributor Letters & Photos in localStorage + Backend API Sync
-import { BAKED_LETTERS } from '../data/baked_letters.js?v=1786660166';
-import { BAKED_MEMORIES } from '../data/baked_memories.js?v=1786660166';
+import { BAKED_LETTERS, BAKED_LETTER_ORDER } from '../data/baked_letters.js?v=1786727754';
+import { BAKED_MEMORIES, BAKED_MEMORY_ORDER } from '../data/baked_memories.js?v=1786727754';
 
 const STORAGE_KEYS = {
   MY_LETTER: 'dear_dewey_my_letter_v1',
@@ -312,9 +312,9 @@ class LetterStorageService {
   getLetterOrder() {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.LETTER_ORDER);
-      return data ? JSON.parse(data) : [];
+      return data ? JSON.parse(data) : BAKED_LETTER_ORDER;
     } catch (e) {
-      return [];
+      return BAKED_LETTER_ORDER;
     }
   }
 
@@ -330,9 +330,9 @@ class LetterStorageService {
   getMemoryOrder() {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.MEMORY_ORDER);
-      return data ? JSON.parse(data) : [];
+      return data ? JSON.parse(data) : BAKED_MEMORY_ORDER;
     } catch (e) {
-      return [];
+      return BAKED_MEMORY_ORDER;
     }
   }
 

@@ -1,4 +1,4 @@
-import { App } from './App.js?v=1786660166';
+import { App } from './App.js?v=1786727754';
 
 const { createElement } = window.React;
 const { createRoot } = window.ReactDOM;

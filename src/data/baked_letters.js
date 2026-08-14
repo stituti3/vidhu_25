@@ -168,3 +168,18 @@ export const BAKED_LETTERS = [
     "isCustom": true
   }
 ];
+export const BAKED_LETTER_ORDER = [
+  "let-user-1786641320269-go3ax",
+  "let-user-1786641193720-eyoww",
+  "let-user-1786637174210-u4sao",
+  "let-user-1786637197893-q1ua7",
+  "let-user-1786637808376-6ah29",
+  "let-user-1786637140928-q1kj6",
+  "let-user-1786637782346-0e5i3",
+  "let-user-1786641274082-uabnr",
+  "let-user-1786637846258-jvwg8",
+  "let-user-1786652952980-6fqt7",
+  "let-user-1786634695449",
+  "let-user-1786641253600-jdatb",
+  "let-user-1786647089290-qdy55"
+];

@@ -1,7 +1,7 @@
-import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786660166';
-import { soundService } from '../services/soundEngine.js?v=1786660166';
-import { letterStorage } from '../services/letterStorage.js?v=1786660166';
-import { launchConfetti } from '../components/ConfettiLauncher.js?v=1786660166';
+import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786727754';
+import { soundService } from '../services/soundEngine.js?v=1786727754';
+import { letterStorage } from '../services/letterStorage.js?v=1786727754';
+import { launchConfetti } from '../components/ConfettiLauncher.js?v=1786727754';
 
 const { useState, useEffect, useRef } = window.React;
 const html = window.htm.bind(window.React.createElement);

@@ -1,4 +1,4 @@
-import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786660166';
+import { BIRTHDAY_CONFIG } from '../data/birthdayData.js?v=1786727754';
 
 const { useState } = window.React;
 const html = window.htm.bind(window.React.createElement);

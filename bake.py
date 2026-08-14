@@ -47,6 +47,8 @@ letters.sort(key=lambda x: get_let_idx(x.get('id', '')))
 
 with open('src/data/baked_memories.js', 'w') as f:
     f.write('export const BAKED_MEMORIES = ' + json.dumps(memories, indent=2) + ';\n')
+    f.write('export const BAKED_MEMORY_ORDER = ' + json.dumps(memory_order, indent=2) + ';\n')
 
 with open('src/data/baked_letters.js', 'w') as f:
     f.write('export const BAKED_LETTERS = ' + json.dumps(letters, indent=2) + ';\n')
+    f.write('export const BAKED_LETTER_ORDER = ' + json.dumps(letter_order, indent=2) + ';\n')
